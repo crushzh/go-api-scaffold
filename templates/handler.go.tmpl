@@ -1,0 +1,146 @@
+package handler
+
+import (
+	"strconv"
+
+	"{{.ModulePath}}/internal/model"
+	"{{.ModulePath}}/internal/service"
+	"{{.ModulePath}}/pkg/response"
+
+	"github.com/gin-gonic/gin"
+)
+
+// {{.PascalName}}Handler handles {{.ChineseName}} CRUD endpoints
+type {{.PascalName}}Handler struct {
+	svc *service.{{.PascalName}}Service
+}
+
+func New{{.PascalName}}Handler(svc *service.{{.PascalName}}Service) *{{.PascalName}}Handler {
+	return &{{.PascalName}}Handler{svc: svc}
+}
+
+// List returns a paginated list
+// @Summary  List {{.PluralName}}
+// @Tags     {{.PascalName}}
+// @Security Bearer
+// @Param    page      query int    false "Page number"   default(1)
+// @Param    page_size query int    false "Page size"     default(10)
+// @Param    keyword   query string false "Search keyword"
+// @Success  200 {object} response.Response{data=response.PageData}
+// @Router   /{{.PluralName}} [get]
+func (h *{{.PascalName}}Handler) List(c *gin.Context) {
+	var req model.Query{{.PascalName}}Request
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.ParamError(c, "invalid parameters")
+		return
+	}
+
+	items, total, err := h.svc.List(&req)
+	if err != nil {
+		response.ServerError(c, "query failed")
+		return
+	}
+
+	response.SuccessPage(c, items, total, req.Page, req.PageSize)
+}
+
+// Create creates a new record
+// @Summary  Create {{.CamelName}}
+// @Tags     {{.PascalName}}
+// @Security Bearer
+// @Accept   json
+// @Produce  json
+// @Param    body body model.Create{{.PascalName}}Request true "Create parameters"
+// @Success  200  {object} response.Response{data=model.{{.PascalName}}}
+// @Router   /{{.PluralName}} [post]
+func (h *{{.PascalName}}Handler) Create(c *gin.Context) {
+	var req model.Create{{.PascalName}}Request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ParamError(c, "invalid parameters: "+err.Error())
+		return
+	}
+
+	item, err := h.svc.Create(&req)
+	if err != nil {
+		response.ServerError(c, "create failed: "+err.Error())
+		return
+	}
+
+	response.Success(c, item)
+}
+
+// Get returns a record by ID
+// @Summary  Get {{.CamelName}} by ID
+// @Tags     {{.PascalName}}
+// @Security Bearer
+// @Param    id path int true "ID"
+// @Success  200 {object} response.Response{data=model.{{.PascalName}}}
+// @Router   /{{.PluralName}}/{id} [get]
+func (h *{{.PascalName}}Handler) Get(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.ParamError(c, "invalid ID")
+		return
+	}
+
+	item, err := h.svc.GetByID(uint(id))
+	if err != nil {
+		response.NotFound(c, "record not found")
+		return
+	}
+
+	response.Success(c, item)
+}
+
+// Update updates a record
+// @Summary  Update {{.CamelName}}
+// @Tags     {{.PascalName}}
+// @Security Bearer
+// @Accept   json
+// @Param    id   path int                             true "ID"
+// @Param    body body model.Update{{.PascalName}}Request true "Update parameters"
+// @Success  200  {object} response.Response{data=model.{{.PascalName}}}
+// @Router   /{{.PluralName}}/{id} [put]
+func (h *{{.PascalName}}Handler) Update(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.ParamError(c, "invalid ID")
+		return
+	}
+
+	var req model.Update{{.PascalName}}Request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ParamError(c, "invalid parameters: "+err.Error())
+		return
+	}
+
+	item, err := h.svc.Update(uint(id), &req)
+	if err != nil {
+		response.ServerError(c, "update failed: "+err.Error())
+		return
+	}
+
+	response.Success(c, item)
+}
+
+// Delete removes a record
+// @Summary  Delete {{.CamelName}}
+// @Tags     {{.PascalName}}
+// @Security Bearer
+// @Param    id path int true "ID"
+// @Success  200 {object} response.Response
+// @Router   /{{.PluralName}}/{id} [delete]
+func (h *{{.PascalName}}Handler) Delete(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.ParamError(c, "invalid ID")
+		return
+	}
+
+	if err := h.svc.Delete(uint(id)); err != nil {
+		response.ServerError(c, "delete failed: "+err.Error())
+		return
+	}
+
+	response.OK(c)
+}

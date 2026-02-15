@@ -1,0 +1,66 @@
+package store
+
+import (
+	"{{.ModulePath}}/internal/model"
+
+	"gorm.io/gorm"
+)
+
+// {{.PascalName}}Repository is the {{.ChineseName}} data repository
+type {{.PascalName}}Repository struct {
+	db *gorm.DB
+}
+
+func New{{.PascalName}}Repository(s *Store) *{{.PascalName}}Repository {
+	return &{{.PascalName}}Repository{db: s.DB()}
+}
+
+// Create creates a new {{.ChineseName}}
+func (r *{{.PascalName}}Repository) Create(item *model.{{.PascalName}}) error {
+	return r.db.Create(item).Error
+}
+
+// FindByID returns a {{.ChineseName}} by ID
+func (r *{{.PascalName}}Repository) FindByID(id uint) (*model.{{.PascalName}}, error) {
+	var item model.{{.PascalName}}
+	if err := r.db.First(&item, id).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+// List returns a paginated list of {{.ChineseName}}
+func (r *{{.PascalName}}Repository) List(page, pageSize int, keyword string) ([]model.{{.PascalName}}, int64, error) {
+	var items []model.{{.PascalName}}
+	var total int64
+
+	query := r.db.Model(&model.{{.PascalName}}{})
+
+	// Keyword search
+	if keyword != "" {
+		query = query.Where("name LIKE ?", "%"+keyword+"%")
+	}
+
+	// Total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Pagination
+	offset := (page - 1) * pageSize
+	if err := query.Offset(offset).Limit(pageSize).Order("id DESC").Find(&items).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return items, total, nil
+}
+
+// Update updates a {{.ChineseName}}
+func (r *{{.PascalName}}Repository) Update(item *model.{{.PascalName}}) error {
+	return r.db.Save(item).Error
+}
+
+// Delete removes a {{.ChineseName}} by ID
+func (r *{{.PascalName}}Repository) Delete(id uint) error {
+	return r.db.Delete(&model.{{.PascalName}}{}, id).Error
+}

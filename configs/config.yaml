@@ -1,0 +1,56 @@
+# Application
+app:
+  name: "myapp"
+  version: "0.1.0"
+  mode: "debug"              # debug, release, test
+
+# HTTP Server
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: 10           # seconds
+  write_timeout: 10
+
+# gRPC Server
+grpc:
+  enabled: false
+  port: 9090
+
+# Database (sqlite, mysql, postgres)
+database:
+  type: "sqlite"
+  # SQLite
+  path: "./data/app.db"
+  # MySQL
+  # host: "127.0.0.1"
+  # port: 3306
+  # user: "root"
+  # password: "123456"
+  # database: "myapp"
+  # PostgreSQL
+  # host: "127.0.0.1"
+  # port: 5432
+  # user: "postgres"
+  # password: "123456"
+  # database: "myapp"
+  max_open_conns: 20
+  max_idle_conns: 5
+  conn_max_lifetime: 60      # minutes
+  auto_migrate: true
+
+# Logging
+log:
+  level: "info"              # debug, info, warn, error
+  format: "console"          # console, json
+  output: "both"             # console, file, both
+  file_path: "logs/app.log"
+  max_size: 50               # MB
+  max_age: 7                 # days
+  max_backups: 5
+  compress: true
+
+# JWT Authentication
+jwt:
+  secret: "change-me-in-production"
+  expire: 24                 # hours
+  refresh_hours: 168         # 7 days

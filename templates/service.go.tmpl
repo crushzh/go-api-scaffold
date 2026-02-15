@@ -1,0 +1,72 @@
+package service
+
+import (
+	"{{.ModulePath}}/internal/model"
+	"{{.ModulePath}}/internal/store"
+)
+
+// {{.PascalName}}Service handles {{.ChineseName}} business logic
+type {{.PascalName}}Service struct {
+	repo *store.{{.PascalName}}Repository
+}
+
+func New{{.PascalName}}Service(db *store.Store) *{{.PascalName}}Service {
+	return &{{.PascalName}}Service{
+		repo: store.New{{.PascalName}}Repository(db),
+	}
+}
+
+// Create creates a new {{.ChineseName}}
+func (s *{{.PascalName}}Service) Create(req *model.Create{{.PascalName}}Request) (*model.{{.PascalName}}, error) {
+	item := &model.{{.PascalName}}{
+		Name: req.Name,
+		// TODO: Add other field assignments here
+	}
+
+	if err := s.repo.Create(item); err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+// GetByID returns a {{.ChineseName}} by ID
+func (s *{{.PascalName}}Service) GetByID(id uint) (*model.{{.PascalName}}, error) {
+	return s.repo.FindByID(id)
+}
+
+// List returns a paginated list of {{.ChineseName}}
+func (s *{{.PascalName}}Service) List(req *model.Query{{.PascalName}}Request) ([]model.{{.PascalName}}, int64, error) {
+	if req.Page < 1 {
+		req.Page = 1
+	}
+	if req.PageSize < 1 {
+		req.PageSize = 10
+	}
+	if req.PageSize > 100 {
+		req.PageSize = 100
+	}
+	return s.repo.List(req.Page, req.PageSize, req.Keyword)
+}
+
+// Update updates a {{.ChineseName}}
+func (s *{{.PascalName}}Service) Update(id uint, req *model.Update{{.PascalName}}Request) (*model.{{.PascalName}}, error) {
+	item, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Name != nil {
+		item.Name = *req.Name
+	}
+	// TODO: Add other field updates here
+
+	if err := s.repo.Update(item); err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+// Delete removes a {{.ChineseName}}
+func (s *{{.PascalName}}Service) Delete(id uint) error {
+	return s.repo.Delete(id)
+}

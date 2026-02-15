@@ -1,0 +1,36 @@
+package model
+
+import "time"
+
+// {{.PascalName}} is the {{.ChineseName}} model
+type {{.PascalName}} struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Name      string    `json:"name" gorm:"size:100;not null;index"`
+	// TODO: Add business fields here
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// TableName overrides the table name
+func ({{.PascalName}}) TableName() string {
+	return "{{.PluralName}}"
+}
+
+// Create{{.PascalName}}Request is the create request
+type Create{{.PascalName}}Request struct {
+	Name string `json:"name" binding:"required,max=100"`
+	// TODO: Add create fields here
+}
+
+// Update{{.PascalName}}Request is the update request
+type Update{{.PascalName}}Request struct {
+	Name *string `json:"name" binding:"omitempty,max=100"`
+	// TODO: Add update fields here
+}
+
+// Query{{.PascalName}}Request is the query request
+type Query{{.PascalName}}Request struct {
+	Page     int    `form:"page" json:"page"`
+	PageSize int    `form:"page_size" json:"page_size"`
+	Keyword  string `form:"keyword" json:"keyword"`
+}

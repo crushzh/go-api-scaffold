@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "go-api-scaffold/api/proto/gen";
+
+// ExampleService is the example gRPC service
+service ExampleService {
+  rpc GetExample(GetExampleRequest) returns (ExampleResponse);
+  rpc ListExamples(ListExamplesRequest) returns (ListExamplesResponse);
+  rpc CreateExample(CreateExampleRequest) returns (ExampleResponse);
+}
+
+message GetExampleRequest {
+  uint64 id = 1;
+}
+
+message CreateExampleRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message ListExamplesRequest {
+  int32  page      = 1;
+  int32  page_size = 2;
+  string keyword   = 3;
+}
+
+message ExampleResponse {
+  uint64 id          = 1;
+  string name        = 2;
+  string description = 3;
+  string status      = 4;
+}
+
+message ListExamplesResponse {
+  repeated ExampleResponse items = 1;
+  int64 total = 2;
+}
