@@ -4,7 +4,7 @@ Thank you for your interest in contributing! Here's how to get started.
 
 ## Reporting Bugs
 
-- Search [existing issues](https://github.com/mrzhoong/go-api-scaffold/issues) first
+- Search [existing issues](https://github.com/crushzh/go-api-scaffold/issues) first
 - If not found, open a new issue with:
   - Go version (`go version`)
   - OS and architecture
@@ -50,7 +50,7 @@ chore:    Build / tooling
 ## Development Setup
 
 ```bash
-git clone https://github.com/mrzhoong/go-api-scaffold.git
+git clone https://github.com/crushzh/go-api-scaffold.git
 cd go-api-scaffold
 go mod download
 make run

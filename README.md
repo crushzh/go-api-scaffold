@@ -2,8 +2,8 @@
 
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mrzhoong/go-api-scaffold?style=flat-square)](https://goreportcard.com/report/github.com/mrzhoong/go-api-scaffold)
-[![Release](https://img.shields.io/github/v/release/mrzhoong/go-api-scaffold?style=flat-square)](https://github.com/mrzhoong/go-api-scaffold/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/crushzh/go-api-scaffold?style=flat-square)](https://goreportcard.com/report/github.com/crushzh/go-api-scaffold)
+[![Release](https://img.shields.io/github/v/release/crushzh/go-api-scaffold?style=flat-square)](https://github.com/crushzh/go-api-scaffold/releases)
 
 > Production-ready Go REST API boilerplate with Gin, GORM, JWT auth, Swagger docs, gRPC support, and built-in code generator.
 
@@ -42,7 +42,7 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/mrzhoong/go-api-scaffold.git
+git clone https://github.com/crushzh/go-api-scaffold.git
 cd go-api-scaffold
 
 # 2. Install dependencies

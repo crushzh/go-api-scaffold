@@ -27,7 +27,7 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/mrzhoong/go-api-scaffold.git
+git clone https://github.com/crushzh/go-api-scaffold.git
 cd go-api-scaffold
 
 # 2. 安装依赖

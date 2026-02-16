@@ -27,7 +27,7 @@
 
 ```bash
 # 1. 複製儲存庫
-git clone https://github.com/mrzhoong/go-api-scaffold.git
+git clone https://github.com/crushzh/go-api-scaffold.git
 cd go-api-scaffold
 
 # 2. 安裝依賴
