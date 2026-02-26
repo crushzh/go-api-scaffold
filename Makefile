@@ -63,18 +63,12 @@ build:
 
 # ==================== Frontend ====================
 
-# Build frontend (configure frontend project path as needed)
+# Build frontend
 .PHONY: web
 web:
 	@echo "Building frontend..."
-	@if [ -d "../$(APP_NAME)-web" ]; then \
-		cd ../$(APP_NAME)-web && npm run build; \
-		rm -rf internal/web/dist; \
-		cp -r ../$(APP_NAME)-web/dist internal/web/dist; \
-		echo "Frontend build complete"; \
-	else \
-		echo "Warning: Frontend project not found at ../$(APP_NAME)-web"; \
-	fi
+	@cd web && npm install && npm run build
+	@echo "Frontend build complete"
 
 # ==================== Cross-platform build ====================
 

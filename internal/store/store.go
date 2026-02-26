@@ -2,6 +2,8 @@ package store
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"go-api-scaffold/internal/model"
@@ -26,6 +28,11 @@ func New(cfg *config.DatabaseConfig) (*Store, error) {
 
 	switch cfg.Type {
 	case "sqlite":
+		if dir := filepath.Dir(cfg.Path); dir != "" && dir != "." {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return nil, fmt.Errorf("failed to create database directory: %w", err)
+			}
+		}
 		dialector = sqlite.Open(cfg.Path)
 	case "mysql":
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",

@@ -19,6 +19,9 @@
 - **Code generator** — scaffold full CRUD modules in one command
 - **Cross-platform build** — Linux (amd64/arm64/arm32), Windows, macOS
 - **Docker** support with multi-stage build
+- **Frontend Template** — UmiJS Max + Ant Design ProComponents (Login + Dashboard + CRUD)
+- **Swagger UI** — Pre-integrated, visit `/swagger/index.html` on startup
+- **SQLite Auto-setup** — Auto-creates data directory + default admin seed (admin/admin123)
 - **Embedded frontend** — serve SPA via `go:embed`
 - **Structured logging** with Zap + Lumberjack rotation
 - **Unified response** format with standard error codes
@@ -79,6 +82,8 @@ go-api-scaffold/
 │   ├── logger/           # Logging (Zap + Lumberjack)
 │   └── response/         # Unified API response
 ├── api/proto/            # Protocol Buffer definitions
+├── web/                  # Frontend (UmiJS Max + ProComponents)
+├── docs/swagger/         # Swagger docs (pre-generated)
 ├── configs/              # Configuration files
 ├── templates/            # Code generator templates
 ├── scripts/              # Deployment scripts
@@ -220,9 +225,29 @@ scp -r build/linux-amd64/* user@server:/opt/myapp/
 ./scripts/manage.sh status    # Check status
 ```
 
+## Frontend
+
+```bash
+cd web
+npm install
+npm run dev     # Development (http://localhost:8000, proxy to :8080)
+npm run build   # Production build (output: ../internal/web/dist/)
+```
+
+Built frontend is embedded into the Go binary via `go:embed`. Run `make web && make build` to produce a single binary with frontend included.
+
 ## Customization
 
-Rename the module for your project:
+### Using init.sh (Recommended)
+
+If you cloned this template from [go-scaffold](https://github.com/crushzh/go-scaffold), use the initialization script:
+
+```bash
+./init.sh api my-api
+# Automatically: copy template → replace module name → go mod tidy → swag init → git init
+```
+
+### Manual Rename
 
 ```bash
 # macOS

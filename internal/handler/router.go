@@ -13,7 +13,11 @@ import (
 	"go-api-scaffold/pkg/logger"
 	"go-api-scaffold/pkg/response"
 
+	_ "go-api-scaffold/docs/swagger"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // NewRouter creates the HTTP router
@@ -75,10 +79,7 @@ func NewRouter(cfg *config.Config, authSvc *service.AuthService, exampleSvc *ser
 	}
 
 	// ====== Swagger ======
-	// Uncomment to enable Swagger UI (run make docs first)
-	// import swaggerFiles "github.com/swaggo/files"
-	// import ginSwagger "github.com/swaggo/gin-swagger"
-	// r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// ====== Frontend static files ======
 	registerFrontendRoutes(r)

@@ -1,0 +1,6 @@
+node_modules/
+.umi/
+.umi-production/
+dist/
+npm-debug.log*
+.DS_Store

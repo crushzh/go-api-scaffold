@@ -40,5 +40,11 @@ Thumbs.db
 # Swagger generated (optional: uncomment if you commit generated docs)
 # docs/swagger/
 
-# Frontend dist (optional: uncomment if you embed at build time)
-# internal/web/dist/
+# Frontend
+web/node_modules/
+web/.umi/
+web/.umi-production/
+
+# Frontend dist (keep .gitkeep but ignore build output)
+internal/web/dist/*
+!internal/web/dist/.gitkeep

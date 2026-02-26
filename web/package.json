@@ -1,0 +1,23 @@
+{
+  "name": "myapp-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend for myapp",
+  "scripts": {
+    "dev": "max dev",
+    "build": "max build",
+    "preview": "max preview",
+    "lint": "max lint"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.3.0",
+    "@ant-design/pro-components": "^2.7.0",
+    "@umijs/max": "^4.3.0",
+    "antd": "^5.20.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0"
+  }
+}

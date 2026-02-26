@@ -17,6 +17,9 @@
 - **代码生成器** — 一条命令生成完整 CRUD 模块
 - **跨平台编译** — Linux (amd64/arm64/arm32)、Windows、macOS
 - **Docker** 多阶段构建
+- **前端模板** — UmiJS Max + Ant Design ProComponents（登录 + 仪表盘 + CRUD 示例）
+- **Swagger UI** — 预集成，启动即可访问 `/swagger/index.html`
+- **SQLite 自动初始化** — 自动创建数据目录 + 默认管理员种子数据（admin/admin123）
 - **前端嵌入** — `go:embed` 内嵌 SPA 前端
 - **结构化日志** — Zap + Lumberjack 日志轮转
 - **统一响应格式** — 标准错误码体系
@@ -64,6 +67,8 @@ go-api-scaffold/
 │   ├── logger/           # 日志（Zap + Lumberjack）
 │   └── response/         # 统一 API 响应
 ├── api/proto/            # Protocol Buffer 定义
+├── web/                  # 前端（UmiJS Max + ProComponents）
+├── docs/swagger/         # Swagger 文档（预生成）
 ├── configs/              # 配置文件
 ├── templates/            # 代码生成模板
 ├── scripts/              # 部署脚本
@@ -198,9 +203,29 @@ scp -r build/linux-amd64/* user@server:/opt/myapp/
 ./scripts/manage.sh status    # 查看状态
 ```
 
+## 前端
+
+```bash
+cd web
+npm install
+npm run dev     # 开发模式（http://localhost:8000，代理到 :8080）
+npm run build   # 生产构建（输出到 ../internal/web/dist/）
+```
+
+构建后的前端通过 `go:embed` 嵌入 Go 二进制。执行 `make web && make build` 即可生成包含前端的单一可执行文件。
+
 ## 自定义
 
-重命名模块:
+### 使用 init.sh（推荐）
+
+如果从 [go-scaffold](https://github.com/crushzh/go-scaffold) 克隆，使用初始化脚本：
+
+```bash
+./init.sh api my-api
+# 自动完成: 复制模板 → 替换模块名 → go mod tidy → swag init → git init
+```
+
+### 手动重命名
 
 ```bash
 # macOS
