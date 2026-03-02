@@ -18,22 +18,29 @@ LDFLAGS := -s -w \
 # Output directory
 BUILD_DIR := build
 
+# Frontend directory
+WEB_DIR := web
+WEB_DIST_DEST := internal/web/dist
+
 # ==================== Cross-compile toolchain ====================
+# Auto-detected by OS, override via environment variables
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
     CC_LINUX_AMD64 ?= x86_64-linux-gnu-gcc
-    CC_LINUX_ARM64 ?= aarch64-linux-gnu-gcc
-    CC_LINUX_ARM32 ?= arm-linux-gnueabihf-gcc
+    CC_LINUX_ARM64 ?= D:/tools/gcc-arm/bin/aarch64-linux-gnu-gcc.exe
+    CC_LINUX_ARM32 ?= D:/tools/gcc-arm/bin/arm-linux-gnueabihf-gcc.exe
     CC_WINDOWS ?= gcc
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
+        # macOS (Homebrew: brew tap messense/macos-cross-toolchains)
         DETECTED_OS := macOS
         CC_LINUX_AMD64 ?= x86_64-unknown-linux-gnu-gcc
         CC_LINUX_ARM64 ?= aarch64-unknown-linux-gnu-gcc
         CC_LINUX_ARM32 ?= arm-unknown-linux-gnueabihf-gcc
         CC_WINDOWS ?= x86_64-w64-mingw32-gcc
     else
+        # Linux
         DETECTED_OS := Linux
         CC_LINUX_AMD64 ?= gcc
         CC_LINUX_ARM64 ?= aarch64-linux-gnu-gcc
@@ -63,18 +70,38 @@ build:
 
 # ==================== Frontend ====================
 
-# Build frontend
+# Build frontend and copy to embed directory
 .PHONY: web
 web:
 	@echo "Building frontend..."
-	@cd web && npm install && npm run build
-	@echo "Frontend build complete"
+	@cd $(WEB_DIR) && npm install && npm run build
+	@$(MAKE) web-copy
+
+# Copy frontend dist to embed directory
+.PHONY: web-copy
+web-copy:
+	@echo "Copying frontend dist to $(WEB_DIST_DEST)..."
+	@rm -rf $(WEB_DIST_DEST)
+	@mkdir -p $(WEB_DIST_DEST)
+	@cp -r $(WEB_DIR)/dist/* $(WEB_DIST_DEST)/
+	@echo "Frontend dist copied"
+
+# Clean frontend build
+.PHONY: web-clean
+web-clean:
+	@echo "Cleaning frontend..."
+	@rm -rf $(WEB_DIR)/dist
+	@rm -rf $(WEB_DIR)/node_modules/.cache
+	@rm -rf $(WEB_DIST_DEST)
+	@echo "Frontend clean complete"
 
 # ==================== Cross-platform build ====================
 
+# Linux amd64
 .PHONY: build-linux
 build-linux:
 	@echo "Building for Linux amd64..."
+	@echo "CC: $(CC_LINUX_AMD64)"
 	@mkdir -p $(BUILD_DIR)/linux-amd64
 	CGO_ENABLED=1 CC=$(CC_LINUX_AMD64) GOOS=linux GOARCH=amd64 \
 		$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" \
@@ -82,9 +109,11 @@ build-linux:
 	@cp -r configs $(BUILD_DIR)/linux-amd64/
 	@echo "Build complete: $(BUILD_DIR)/linux-amd64/$(APP_NAME)"
 
+# Linux arm64
 .PHONY: build-arm64
 build-arm64:
 	@echo "Building for Linux arm64..."
+	@echo "CC: $(CC_LINUX_ARM64)"
 	@mkdir -p $(BUILD_DIR)/linux-arm64
 	CGO_ENABLED=1 CC=$(CC_LINUX_ARM64) GOOS=linux GOARCH=arm64 \
 		$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" \
@@ -92,9 +121,11 @@ build-arm64:
 	@cp -r configs $(BUILD_DIR)/linux-arm64/
 	@echo "Build complete: $(BUILD_DIR)/linux-arm64/$(APP_NAME)"
 
+# Linux arm32 (ARMv7 hard-float)
 .PHONY: build-arm32
 build-arm32:
-	@echo "Building for Linux arm32 (ARMv7)..."
+	@echo "Building for Linux arm32 (ARMv7 hard-float)..."
+	@echo "CC: $(CC_LINUX_ARM32)"
 	@mkdir -p $(BUILD_DIR)/linux-arm32
 	CGO_ENABLED=1 CC=$(CC_LINUX_ARM32) GOOS=linux GOARCH=arm GOARM=7 \
 		$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" \
@@ -102,9 +133,11 @@ build-arm32:
 	@cp -r configs $(BUILD_DIR)/linux-arm32/
 	@echo "Build complete: $(BUILD_DIR)/linux-arm32/$(APP_NAME)"
 
+# Windows amd64
 .PHONY: build-windows
 build-windows:
 	@echo "Building for Windows amd64..."
+	@echo "CC: $(CC_WINDOWS)"
 	@mkdir -p $(BUILD_DIR)/windows-amd64
 	CGO_ENABLED=1 CC=$(CC_WINDOWS) GOOS=windows GOARCH=amd64 \
 		$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" \
@@ -112,6 +145,7 @@ build-windows:
 	@cp -r configs $(BUILD_DIR)/windows-amd64/
 	@echo "Build complete: $(BUILD_DIR)/windows-amd64/$(APP_NAME).exe"
 
+# All platforms
 .PHONY: build-all
 build-all: build-linux build-arm64 build-arm32 build-windows
 	@echo "All platforms build complete!"
@@ -164,16 +198,19 @@ protos:
 
 # ==================== Code quality ====================
 
+# Lint
 .PHONY: lint
 lint:
 	@echo "Running linter..."
 	golangci-lint run ./...
 
+# Test
 .PHONY: test
 test:
 	@echo "Running tests..."
 	$(GO) test -v -race -cover ./...
 
+# Coverage
 .PHONY: coverage
 coverage:
 	@echo "Running tests with coverage..."
@@ -181,19 +218,24 @@ coverage:
 	$(GO) tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 
+# Format
 .PHONY: fmt
 fmt:
 	@echo "Formatting code..."
 	$(GO) fmt ./...
+	@echo "Format complete"
 
 # ==================== Dependencies & cleanup ====================
 
+# Download dependencies
 .PHONY: deps
 deps:
 	@echo "Downloading dependencies..."
 	$(GO) mod download
 	$(GO) mod tidy
+	@echo "Dependencies downloaded"
 
+# Clean
 .PHONY: clean
 clean:
 	@echo "Cleaning..."
@@ -208,8 +250,10 @@ info:
 	@echo "=========================================="
 	@echo "Build Configuration"
 	@echo "=========================================="
-	@echo "App:             $(APP_NAME)"
+	@echo "App Name:        $(APP_NAME)"
 	@echo "Version:         $(VERSION)"
+	@echo "Git Commit:      $(GIT_COMMIT)"
+	@echo "Build Time:      $(BUILD_TIME)"
 	@echo "Detected OS:     $(DETECTED_OS)"
 	@echo "CC_LINUX_AMD64:  $(CC_LINUX_AMD64)"
 	@echo "CC_LINUX_ARM64:  $(CC_LINUX_ARM64)"
@@ -224,41 +268,46 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Development:"
-	@echo "  run             Run in dev mode"
-	@echo "  build           Build locally"
-	@echo "  web             Build frontend and copy to dist/"
+	@echo "  run             开发模式运行"
+	@echo "  build           本地编译"
+	@echo ""
+	@echo "Frontend:"
+	@echo "  web             编译前端并复制到嵌入目录"
+	@echo "  web-copy        仅复制前端 dist 到嵌入目录"
+	@echo "  web-clean       清理前端构建产物"
 	@echo ""
 	@echo "Cross Compile:"
-	@echo "  build-linux     Build Linux amd64"
-	@echo "  build-arm64     Build Linux arm64"
-	@echo "  build-arm32     Build Linux arm32 (ARMv7)"
-	@echo "  build-windows   Build Windows"
-	@echo "  build-all       Build all platforms"
+	@echo "  build-linux     编译 Linux amd64"
+	@echo "  build-arm64     编译 Linux arm64 (AArch64)"
+	@echo "  build-arm32     编译 Linux arm32 (ARMv7 硬浮点)"
+	@echo "  build-windows   编译 Windows"
+	@echo "  build-all       全平台编译"
 	@echo ""
 	@echo "Code Generator:"
-	@echo "  gen             Generate module code (make gen name=order cn=Order)"
+	@echo "  gen             生成模块代码 (make gen name=order cn=Order)"
 	@echo ""
 	@echo "Documentation:"
-	@echo "  docs            Generate Swagger docs"
-	@echo "  protos          Generate Proto Buffer code"
-	@echo "  swag-install    Install swag tool"
-	@echo "  proto-install   Install protoc-gen-go tools"
+	@echo "  docs            生成 Swagger 文档"
+	@echo "  protos          生成 Proto Buffer 代码"
+	@echo "  swag-install    安装 swag 工具"
+	@echo "  proto-install   安装 protoc-gen-go 工具"
 	@echo ""
 	@echo "Quality:"
-	@echo "  lint            Run linter"
-	@echo "  test            Run tests"
-	@echo "  coverage        Test coverage"
-	@echo "  fmt             Format code"
+	@echo "  lint            代码检查"
+	@echo "  test            运行测试"
+	@echo "  coverage        测试覆盖率"
+	@echo "  fmt             格式化代码"
 	@echo ""
 	@echo "Misc:"
-	@echo "  deps            Download dependencies"
-	@echo "  clean           Clean build artifacts"
-	@echo "  info            Show build configuration"
-	@echo "  help            Show this help"
+	@echo "  deps            下载依赖"
+	@echo "  clean           清理构建产物"
+	@echo "  info            显示当前编译配置"
+	@echo "  help            显示帮助"
 	@echo ""
-	@echo "Cross-compile toolchain:"
-	@echo "  macOS:   brew tap messense/macos-cross-toolchains"
-	@echo "           brew install aarch64-unknown-linux-gnu"
-	@echo "           brew install arm-unknown-linux-gnueabihf"
-	@echo "  Linux:   apt install gcc-aarch64-linux-gnu"
-	@echo "           apt install gcc-arm-linux-gnueabihf"
+	@echo "Cross-compile toolchain (auto-detected, can override via environment):"
+	@echo "  - macOS:   brew tap messense/macos-cross-toolchains"
+	@echo "             brew install aarch64-unknown-linux-gnu      # ARM64"
+	@echo "             brew install arm-unknown-linux-gnueabihf    # ARM32"
+	@echo "  - Windows: Set CC_LINUX_ARM64/CC_LINUX_ARM32 to your ARM GCC path"
+	@echo "  - Linux:   apt install gcc-aarch64-linux-gnu           # ARM64"
+	@echo "             apt install gcc-arm-linux-gnueabihf         # ARM32"
