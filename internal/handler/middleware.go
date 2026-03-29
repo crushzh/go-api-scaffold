@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"go-api-scaffold/pkg/logger"
-	"go-api-scaffold/pkg/response"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"go-api-scaffold/pkg/logger"
+	"go-api-scaffold/pkg/response"
 )
 
 // Recovery handles panics and returns 500
@@ -92,5 +94,88 @@ func Timeout(timeout time.Duration, skipPaths ...string) gin.HandlerFunc {
 		defer cancel()
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
+	}
+}
+
+// SecurityHeaders 添加安全响应头
+func SecurityHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Cache-Control", "no-store")
+		c.Next()
+	}
+}
+
+// RateLimit IP 级别速率限制
+func RateLimit(maxRequests int, window time.Duration) gin.HandlerFunc {
+	type visitor struct {
+		count   int
+		resetAt time.Time
+	}
+	var mu sync.Mutex
+	visitors := make(map[string]*visitor)
+
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		mu.Lock()
+		v, exists := visitors[ip]
+		now := time.Now()
+		if !exists || now.After(v.resetAt) {
+			visitors[ip] = &visitor{count: 1, resetAt: now.Add(window)}
+			mu.Unlock()
+			c.Next()
+			return
+		}
+		v.count++
+		if v.count > maxRequests {
+			mu.Unlock()
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"code":    50004,
+				"message": "请求过于频繁，请稍后再试",
+			})
+			c.Abort()
+			return
+		}
+		mu.Unlock()
+		c.Next()
+	}
+}
+
+// DemoMode 演示模式中间件：拦截写操作
+func DemoMode() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead || c.Request.Method == http.MethodOptions {
+			c.Next()
+			return
+		}
+		// 允许登录
+		if strings.HasSuffix(c.FullPath(), "/auth/login") {
+			c.Next()
+			return
+		}
+		c.JSON(http.StatusForbidden, gin.H{
+			"code":    30001,
+			"message": "演示模式，不允许修改操作",
+		})
+		c.Abort()
+	}
+}
+
+// HealthReady 就绪探针（含依赖检查）
+func HealthReady(checks ...func() error) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		for _, check := range checks {
+			if err := check(); err != nil {
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"status": "not ready",
+					"error":  err.Error(),
+				})
+				return
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "ready"})
 	}
 }

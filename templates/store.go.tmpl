@@ -2,9 +2,18 @@ package store
 
 import (
 	"{{.ModulePath}}/internal/model"
+	"{{.ModulePath}}/pkg/querybuilder"
 
 	"gorm.io/gorm"
 )
+
+// {{.PascalName}}Query {{.ChineseName}}查询参数
+type {{.PascalName}}Query struct {
+	Name     string `form:"name"     search:"type:contains;column:name"`
+	Status   *int   `form:"status"   search:"type:exact;column:status"`
+	Page     int    `form:"page"`
+	PageSize int    `form:"page_size"`
+}
 
 // {{.PascalName}}Repository is the {{.ChineseName}} data repository
 type {{.PascalName}}Repository struct {
@@ -30,25 +39,25 @@ func (r *{{.PascalName}}Repository) FindByID(id uint) (*model.{{.PascalName}}, e
 }
 
 // List returns a paginated list of {{.ChineseName}}
-func (r *{{.PascalName}}Repository) List(page, pageSize int, keyword string) ([]model.{{.PascalName}}, int64, error) {
+func (r *{{.PascalName}}Repository) List(query *{{.PascalName}}Query) ([]model.{{.PascalName}}, int64, error) {
 	var items []model.{{.PascalName}}
 	var total int64
 
-	query := r.db.Model(&model.{{.PascalName}}{})
+	db := r.db.Model(&model.{{.PascalName}}{})
 
-	// Keyword search
-	if keyword != "" {
-		query = query.Where("name LIKE ?", "%"+keyword+"%")
-	}
+	// 通过 search tag 自动构建查询条件
+	db = querybuilder.Apply(db, query)
 
-	// Total count
-	if err := query.Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Pagination
+	page, pageSize := query.Page, query.PageSize
+	if page <= 0 { page = 1 }
+	if pageSize <= 0 { pageSize = 10 }
 	offset := (page - 1) * pageSize
-	if err := query.Offset(offset).Limit(pageSize).Order("id DESC").Find(&items).Error; err != nil {
+
+	if err := db.Offset(offset).Limit(pageSize).Order("id DESC").Find(&items).Error; err != nil {
 		return nil, 0, err
 	}
 
